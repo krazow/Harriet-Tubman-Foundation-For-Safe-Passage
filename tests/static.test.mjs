@@ -1,7 +1,7 @@
 // Checks that the PWA shell is complete: manifest, icons, and every cached file exists.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 const root = new URL('..', import.meta.url).pathname;
@@ -17,6 +17,13 @@ test('every file the service worker caches exists', () => {
   const sw = readFileSync(join(root, 'sw.js'), 'utf8');
   const list = JSON.parse(sw.match(/const SHELL = (\[[\s\S]*?\]);/)[1].replace(/'/g, '"').replace(/,\s*\]/, ']'));
   for (const f of list) if (f !== './') assert.ok(existsSync(join(root, f)), f);
+});
+
+test('every JavaScript module is cached for offline use', () => {
+  const sw = readFileSync(join(root, 'sw.js'), 'utf8');
+  const walk = (dir) => readdirSync(join(root, dir), { withFileTypes: true })
+    .flatMap((e) => (e.isDirectory() ? walk(`${dir}/${e.name}`) : e.name.endsWith('.js') ? [`${dir}/${e.name}`] : []));
+  for (const f of walk('js')) assert.ok(sw.includes(`'./${f}'`), `${f} missing from sw.js SHELL`);
 });
 
 test('app, service worker and package versions match', () => {

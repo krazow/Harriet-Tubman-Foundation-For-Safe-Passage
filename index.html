@@ -14,19 +14,20 @@
   <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
+  <a class="skip" href="#main" data-skip>Skip to main content</a>
   <header class="top">
     <div class="brand"><img src="icons/icon.svg" alt="" width="28" height="28"><span>Safe Passage Ops</span></div>
-    <a id="who" class="who" href="#/more"></a>
+    <a id="who" class="who" href="#/more" aria-label="Account and settings"></a>
   </header>
   <div id="demo-banner" class="demo" hidden>DEMO DATA — fictional people and records</div>
   <button id="update" class="update" hidden>A new version is ready — tap to reload</button>
   <main id="main" tabindex="-1"></main>
   <nav class="nav" aria-label="Main">
-    <a href="#/today" data-tab="today"><span>🏠</span>Today</a>
-    <a href="#/people" data-tab="people"><span>👥</span>People</a>
-    <a href="#/programs" data-tab="programs"><span>🎨</span>Programs</a>
-    <a href="#/money" data-tab="money"><span>💵</span>Money</a>
-    <a href="#/more" data-tab="more"><span>☰</span>More</a>
+    <a href="#/today" data-tab="today"><span aria-hidden="true">🏠</span>Today</a>
+    <a href="#/people" data-tab="people"><span aria-hidden="true">👥</span>People</a>
+    <a href="#/programs" data-tab="programs"><span aria-hidden="true">🎨</span>Programs</a>
+    <a href="#/money" data-tab="money"><span aria-hidden="true">💵</span>Money</a>
+    <a href="#/more" data-tab="more"><span aria-hidden="true">☰</span>More</a>
   </nav>
   <div id="sheet" class="sheet" hidden></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>

@@ -1,9 +1,12 @@
 // Local data store with two separate workspaces: "demo" (fake data) and "live".
 // Live data stays on this device until the backend (Supabase) is connected.
 import { demoData, DEMO_USERS } from './demo-data.js';
+import { features } from './features/registry.js';
 
 const KEY = (ws) => `spo:${ws}:data`;
 const META = 'spo:meta';
+// Bump when demo content changes so devices get the new demo records.
+const DEMO_VERSION = 3;
 
 function read(key, fallback) {
   try {
@@ -23,6 +26,29 @@ function write(key, value) {
   }
 }
 
+function iso(offsetDays) {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Full demo dataset: core demo data plus every feature's demo records. */
+function fullDemo() {
+  const d = demoData();
+  for (const f of features) Object.assign(d, f.demo ? f.demo(iso) : {});
+  return d;
+}
+
+/** Make sure every collection and setting that features need exists (migrates old saved data). */
+function ensureSchema(data) {
+  data.settings ||= {};
+  for (const f of features) {
+    for (const [k, v] of Object.entries(f.collections || {})) if (!Array.isArray(data[k])) data[k] = structuredClone(v);
+    for (const [k, v] of Object.entries(f.settings || {})) if (!(k in data.settings)) data.settings[k] = v;
+  }
+  return data;
+}
+
 function emptyLive() {
   const d = demoData();
   return {
@@ -38,7 +64,9 @@ export const store = {
 
   load() {
     const ws = this.meta.workspace;
-    this.data = read(KEY(ws), null) || (ws === 'demo' ? demoData() : emptyLive());
+    let saved = read(KEY(ws), null);
+    if (ws === 'demo' && this.meta.demoVersion !== DEMO_VERSION) { saved = null; this.meta.demoVersion = DEMO_VERSION; }
+    this.data = ensureSchema(saved || (ws === 'demo' ? fullDemo() : emptyLive()));
     if (!this.data.users.find((u) => u.id === this.meta.userId)) this.meta.userId = this.data.users[0].id;
     this.save();
   },
@@ -55,16 +83,18 @@ export const store = {
   setUser(id) { this.meta.userId = id; this.save(); },
 
   resetDemo() {
-    write(KEY('demo'), demoData());
+    write(KEY('demo'), fullDemo());
     if (this.isDemo) this.load();
   },
 
   id(prefix) { return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); },
 
   /** Every change goes through here so it lands in the audit log. */
-  change(action, detail, fn) {
+  change(action, detail, fn, { anonymous = false } = {}) {
     fn(this.data);
-    this.data.audit.unshift({ id: this.id('a'), at: new Date().toISOString(), userId: this.meta.userId, action, detail });
+    // anonymous: record that something happened without linking it to the signed-in person (e.g. survey answers).
+    this.data.audit.unshift({ id: this.id('a'), at: anonymous ? new Date().toISOString().slice(0, 10) : new Date().toISOString(),
+      userId: anonymous ? null : this.meta.userId, action, detail });
     this.data.audit = this.data.audit.slice(0, 500);
     this.save();
   },

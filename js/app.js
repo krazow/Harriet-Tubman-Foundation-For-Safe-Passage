@@ -4,51 +4,20 @@ import {
   upcomingDeadlines, canSeeCaseNotes, canSeeMoney, programStats, daysUntil, money,
 } from './rules.js';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';
 
 const NEEDS = { housing: 'Housing', employment: 'Employment', legal: 'Legal help', financial: 'Financial coaching',
   healing: 'Healing arts', mentorship: 'Mentorship' };
 const CATEGORIES = ['Supplies', 'Food', 'Facilities', 'Mileage/fuel', 'Travel', 'Stipends', 'Printing', 'Other'];
 
-// ---------- helpers ----------
-const $ = (sel, root = document) => root.querySelector(sel);
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const today = () => new Date().toISOString().slice(0, 10);
-const fmtDate = (d) => new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-const D = () => store.data;
-const users = () => D().users;
+import {
+  $, esc, today, fmtDate, relDays, D, users, ui, toast, sheet, closeSheet, field, options, download, toCSV, shrinkImage,
+} from './ui.js';
+import { features, feature } from './features/registry.js';
+import './features/index.js';
+
 const prog = (id) => D().programs.find((p) => p.id === id);
-const relDays = (n) => (n < 0 ? `${-n}d overdue` : n === 0 ? 'today' : `in ${n}d`);
-
-function toast(msg) {
-  const t = $('#toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toast.t);
-  toast.t = setTimeout(() => t.classList.remove('show'), 2200);
-}
-
-function sheet(title, bodyHtml, onSubmit) {
-  const el = $('#sheet');
-  el.innerHTML = `<form class="sheet-card" novalidate>
-    <header><h2>${esc(title)}</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
-    <div class="sheet-body">${bodyHtml}</div>
-    <footer><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn primary">Save</button></footer>
-  </form>`;
-  el.hidden = false;
-  const form = $('form', el);
-  el.querySelectorAll('[data-close]').forEach((b) => (b.onclick = closeSheet));
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    const ok = await onSubmit(new FormData(form), form);
-    if (ok !== false) { closeSheet(); render(); }
-  };
-  setTimeout(() => form.querySelector('input,select,textarea')?.focus(), 50);
-}
-function closeSheet() { $('#sheet').hidden = true; $('#sheet').innerHTML = ''; }
-
-const field = (label, input) => `<label class="field"><span>${esc(label)}</span>${input}</label>`;
-const options = (list, sel) => list.map(([v, l]) => `<option value="${esc(v)}" ${v === sel ? 'selected' : ''}>${esc(l)}</option>`).join('');
+const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
 
 function statusPill(s) {
   return `<span class="pill ${s}">${{ approved: 'Approved', pending: 'Pending', rejected: 'Rejected' }[s]}</span>`;
@@ -64,17 +33,20 @@ const views = {
     const upcomingSessions = D().sessions.filter((s) => daysUntil(s.date) >= 0 && daysUntil(s.date) <= 7);
     const upcomingEvents = D().events.filter((e) => daysUntil(e.date) >= 0 && daysUntil(e.date) <= 14);
     const people = D().participants.length;
+    // Feature cards; safety alerts (class "card alert") go to the top of the screen.
+    const featureCards = features.map((f) => (f.today && (!f.roles || f.roles.includes(u.role)) ? f.today() : '')).filter(Boolean);
     const monthSessions = D().sessions.filter((s) => daysUntil(s.date) > -31 && daysUntil(s.date) <= 0).length;
 
     return `
       <h1 class="greet">Hi, ${esc(u.name.split(' ')[0])}</h1>
       <p class="muted">${esc(ROLES[u.role])} · ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
       <div class="quick">
-        <button class="qa" data-act="add-expense">🧾<span>Expense</span></button>
-        <button class="qa" data-act="add-session">📝<span>Session</span></button>
-        <button class="qa" data-act="add-participant">👤<span>Person</span></button>
-        <button class="qa" data-act="add-task">✅<span>Task</span></button>
+        <button class="qa" data-act="add-expense"><i aria-hidden="true">🧾</i><span>Expense</span></button>
+        <button class="qa" data-act="add-session"><i aria-hidden="true">📝</i><span>Session</span></button>
+        <button class="qa" data-act="add-participant"><i aria-hidden="true">👤</i><span>Person</span></button>
+        <button class="qa" data-act="add-task"><i aria-hidden="true">✅</i><span>Task</span></button>
       </div>
+      ${featureCards.filter((h) => h.includes('card alert')).join('')}
       <div class="stats">
         <div class="stat"><b>${people}</b><span>People served</span></div>
         <div class="stat"><b>${monthSessions}</b><span>Sessions, 30 days</span></div>
@@ -90,6 +62,7 @@ const views = {
         ${deadlines.length ? deadlines.map((d) => `<a class="row" href="#/money/grants/${d.grantId}"><span class="grow">${esc(d.label)}<small>${esc(d.grant)}</small></span>
           <span class="pill ${d.days < 0 ? 'rejected' : d.days <= 7 ? 'pending' : ''}">${relDays(d.days)}</span></a>`).join('')
           : '<p class="empty">No reports due soon.</p>'}</section>` : ''}
+      ${featureCards.filter((h) => !h.includes('card alert')).join('')}
       <section class="card"><h3>Coming up</h3>
         ${[...upcomingSessions.map((s) => ({ date: s.date, t: `${prog(s.programId)?.name} session`, sub: s.note })),
           ...upcomingEvents.map((e) => ({ date: e.date, t: e.name, sub: e.place }))]
@@ -105,7 +78,7 @@ const views = {
     const list = D().participants.filter((p) => p.name.toLowerCase().includes(q));
     return `
       <div class="head"><h1>People</h1><button class="btn primary" data-act="add-participant">+ Add</button></div>
-      <input class="search" type="search" placeholder="Search people" value="${esc(views.people.q || '')}" data-act="search-people">
+      <input class="search" type="search" aria-label="Search people" placeholder="Search people" value="${esc(views.people.q || '')}" data-act="search-people">
       <section class="card list">
         ${list.map((p) => `<a class="row" href="#/people/${p.id}"><span class="avatar">${esc(p.name[0])}</span>
           <span class="grow">${esc(p.name)}<small>${p.needs.map((n) => NEEDS[n]).join(' · ') || 'No needs listed'}</small></span>
@@ -131,7 +104,7 @@ const views = {
       <section class="card">
         ${[...D().events].sort((a, b) => b.date.localeCompare(a.date)).map((e) => `<div class="row">
           <span class="date">${fmtDate(e.date)}</span><span class="grow">${esc(e.name)}<small>${esc(e.place)}</small></span>
-          <span class="counter"><b>${e.checkins}</b><button class="btn small" data-act="checkin" data-id="${e.id}" aria-label="Check someone in">+1</button></span></div>`).join('')
+          <span class="counter"><b>${e.checkins}</b><button class="btn small" data-act="checkin" data-id="${e.id}" aria-label="Check someone in to ${esc(e.name)}">+1</button></span></div>`).join('')
           || '<p class="empty">No events yet.</p>'}
       </section>`;
   },
@@ -140,8 +113,8 @@ const views = {
     const u = store.user;
     if (sub === 'grants' && id) return grantView(id);
     const tab = sub || 'expenses';
-    const tabs = `<nav class="tabs">${[['expenses', 'Expenses'], ['approvals', 'Approvals'], ['grants', 'Grants']]
-      .map(([k, l]) => `<a href="#/money/${k}" class="${tab === k ? 'on' : ''}">${l}</a>`).join('')}</nav>`;
+    const tabs = `<nav class="tabs" aria-label="Money sections">${[['expenses', 'Expenses'], ['approvals', 'Approvals'], ['grants', 'Grants']]
+      .map(([k, l]) => `<a href="#/money/${k}" class="${tab === k ? 'on' : ''}"${tab === k ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>`;
     let body = '';
     if (tab === 'expenses') {
       const list = [...D().expenses].filter((e) => canSeeMoney(u) || e.submittedBy === u.id).sort((a, b) => b.date.localeCompare(a.date));
@@ -167,15 +140,22 @@ const views = {
 
   more() {
     const u = store.user;
+    const visible = features.filter((f) => f.view && (!f.roles || f.roles.includes(u.role)));
+    const groups = [...new Set(visible.map((f) => f.group || 'Tools'))];
     return `<h1>More</h1>
+      ${groups.map((g) => `<h2 class="hub-h">${esc(g)}</h2><div class="hub">${visible.filter((f) => (f.group || 'Tools') === g)
+        .map((f) => `<a class="hub-item" href="#/f/${f.id}"><span aria-hidden="true">${f.icon || '•'}</span>${esc(f.title)}</a>`).join('')}</div>`).join('')}
       <section class="card"><h3>Signed in as</h3>
         ${field('Person', `<select data-act="switch-user">${options(users().map((x) => [x.id, `${x.name} — ${ROLES[x.role]}`]), u.id)}</select>`)}
         <p class="muted">${store.isDemo ? 'Demo mode lets you try every role.' : 'Real sign-in arrives with the secure backend.'}</p>
       </section>
+      <section class="card"><h3>Display</h3>
+        <label class="row check"><input type="checkbox" data-act="settings-largetext" ${document.body.classList.contains('large-text') ? 'checked' : ''}><span class="grow">Large text<small>Bigger type. Saved on this device only.</small></span></label>
+      </section>
       <section class="card"><h3>Workspace</h3>
         <div class="seg">
-          <button class="${store.isDemo ? 'on' : ''}" data-act="ws" data-ws="demo">Demo data</button>
-          <button class="${!store.isDemo ? 'on' : ''}" data-act="ws" data-ws="live">Live (this device)</button>
+          <button class="${store.isDemo ? 'on' : ''}" aria-pressed="${store.isDemo}" data-act="ws" data-ws="demo">Demo data</button>
+          <button class="${!store.isDemo ? 'on' : ''}" aria-pressed="${!store.isDemo}" data-act="ws" data-ws="live">Live (this device)</button>
         </div>
         <p class="muted">Demo and live data are kept completely separate. Live data stays on this device until the secure backend is connected — don't enter real participant details yet.</p>
         ${store.isDemo ? '<button class="btn" data-act="reset-demo">Reset demo data</button>' : ''}
@@ -185,7 +165,7 @@ const views = {
         <span class="grow">${esc(x.name)}<small>${ROLES[x.role]}</small></span></div>`).join('')}
         <button class="btn" data-act="add-user">+ Add team member</button></section>` : ''}
       ${['ed', 'treasurer', 'board'].includes(u.role) ? `<section class="card"><h3>Activity log</h3>
-        ${D().audit.slice(0, 25).map((a) => `<div class="row"><span class="grow">${esc(a.action)}<small>${esc(a.detail)} · ${esc(store.userName(a.userId))} · ${new Date(a.at).toLocaleString()}</small></span></div>`).join('')
+        ${D().audit.slice(0, 25).map((a) => `<div class="row"><span class="grow">${esc(a.action)}<small>${esc(a.detail)} · ${a.userId ? esc(store.userName(a.userId)) : "Anonymous"} · ${new Date(a.at).toLocaleString()}</small></span></div>`).join('')
         || '<p class="empty">No changes yet.</p>'}</section>` : ''}
       <section class="card"><h3>About</h3><p>Safe Passage Ops v${VERSION}</p>
         <p class="muted">Operations app for the Harriet Tubman Foundation for Safe Passage, Tacoma, WA.</p></section>`;
@@ -200,7 +180,7 @@ function expenseRow(e) {
     <span class="grow">${esc(e.vendor)} <b>${money(e.amount)}</b>
       <small>${fmtDate(e.date)} · ${esc(e.category)} · ${esc(prog(e.programId)?.name || '')} · by ${esc(store.userName(e.submittedBy))}
       ${e.relatedParty ? ' · <span class="flag">Related party</span>' : ''}${s === 'pending' ? ` · needs ${esc(open)}` : ''}</small>
-      ${e.receipt ? `<img class="receipt" src="${e.receipt}" alt="Receipt">` : ''}</span>
+      ${e.receipt ? `<img class="receipt" src="${e.receipt}" alt="Receipt from ${esc(e.vendor)}">` : ''}</span>
     ${canApprove(e, u, users()) ? `<span class="acts"><button class="btn small primary" data-act="approve" data-id="${e.id}">Approve</button>
       <button class="btn small ghost" data-act="reject" data-id="${e.id}">Reject</button></span>` : statusPill(s)}
   </div>`;
@@ -223,7 +203,7 @@ function personView(id) {
     <section class="card"><h3>Sessions attended (${sessions.length})</h3>
       ${sessions.map((s) => `<div class="row"><span class="date">${fmtDate(s.date)}</span><span class="grow">${esc(prog(s.programId)?.name)}</span></div>`).join('') || '<p class="empty">None yet.</p>'}
     </section>
-    <section class="card"><div class="head"><h3>Case notes 🔒</h3>${notes ? `<button class="btn small" data-act="add-note" data-id="${p.id}">+ Note</button>` : ''}</div>
+    <section class="card"><div class="head"><h3>Case notes <span aria-hidden="true">🔒</span></h3>${notes ? `<button class="btn small" data-act="add-note" data-id="${p.id}">+ Note</button>` : ''}</div>
       ${notes ? p.notes.map((n) => `<div class="row"><span class="grow">${esc(n.text)}<small>${esc(store.userName(n.by))} · ${fmtDate(n.date)}</small></span></div>`).join('') || '<p class="empty">No notes.</p>'
         : '<p class="empty">Only the assigned lead and the Executive Director can see case notes.</p>'}
     </section>`;
@@ -349,32 +329,7 @@ const forms = {
   },
 };
 
-function shrinkImage(file) {
-  if (!file || !file.size) return Promise.resolve(null);
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(1, 900 / Math.max(img.width, img.height));
-      const c = document.createElement('canvas');
-      c.width = img.width * scale; c.height = img.height * scale;
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(img.src);
-      resolve(c.toDataURL('image/jpeg', 0.7));
-    };
-    img.onerror = () => resolve(null);
-    img.src = URL.createObjectURL(file);
-  });
-}
 
-function download(name, text, type) {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([text], { type }));
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-}
-
-const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
 
 // ---------- actions ----------
 document.addEventListener('click', (ev) => {
@@ -383,6 +338,10 @@ document.addEventListener('click', (ev) => {
   const act = el.dataset.act;
   const id = el.dataset.id;
   if (forms[act]) return forms[act]();
+  for (const f of features) {
+    if (f.forms?.[act]) return f.forms[act](el);
+    if (f.actions?.[act]) { if (f.actions[act](el)) render(); return; }
+  }
   const d = D();
   switch (act) {
     case 'approve': {
@@ -448,6 +407,10 @@ document.addEventListener('change', (ev) => {
   if (act === 'switch-user') { store.setUser(el.value); toast(`Now using the app as ${store.user.name}`); }
   else if (act === 'task-done') { const t = d.tasks.find((x) => x.id === el.dataset.id); store.change('Task done', t.text, () => { t.done = true; }); }
   else if (act === 'goal') { const p = d.participants.find((x) => x.id === el.dataset.id); const g = p.goals.find((x) => x.id === el.dataset.g); store.change('Goal updated', g.text, () => { g.done = el.checked; }); }
+  else if (features.some((f) => f.changes?.[act])) {
+    const f = features.find((x) => x.changes?.[act]);
+    if (!f.changes[act](el)) return;
+  }
   else if (act === 'deadline') { const g = d.grants.find((x) => x.id === el.dataset.id); const dl = g.deadlines.find((x) => x.id === el.dataset.d); store.change('Deadline updated', dl.label, () => { dl.done = el.checked; }); }
   else return;
   render();
@@ -465,17 +428,36 @@ document.addEventListener('input', (ev) => {
 
 // ---------- router ----------
 function render() {
-  const [, tab = 'today', a, b] = (location.hash || '#/today').split('/');
-  const view = views[tab] || views.today;
-  $('#main').innerHTML = view(a, b);
-  document.querySelectorAll('.nav a').forEach((n) => n.classList.toggle('on', n.dataset.tab === tab));
+  const [, tab = 'today', a, b, c] = (location.hash || '#/today').split('/');
+  let html;
+  if (tab === 'f') {
+    const f = feature(a);
+    const allowed = f && (!f.roles || f.roles.includes(store.user.role) || f.openViews?.includes(b)); // openViews: pages any signed-in role may open (e.g. intake kiosk)
+    html = allowed ? `<a class="back" href="#/more">‹ More</a>${f.view(b, c)}` : '<p class="empty">This page is not available for your role.</p>';
+  } else html = (views[tab] || views.today)(a, b);
+  const a11yKeep = (document.activeElement?.closest?.('#main') && document.activeElement.dataset?.act) ? { ...document.activeElement.dataset } : null;
+  $('#main').innerHTML = html;
+  const navTab = tab === 'f' ? 'more' : tab;
+  document.querySelectorAll('.nav a').forEach((n) => {
+    const on = n.dataset.tab === navTab;
+    n.classList.toggle('on', on);
+    if (on) n.setAttribute('aria-current', 'page'); else n.removeAttribute('aria-current');
+  });
+  document.title = `${(tab === 'f' ? feature(a)?.title : { today: 'Today', people: 'People', programs: 'Programs', money: 'Money', more: 'More' }[tab]) || 'Today'} - Safe Passage Ops`;
+  // After a re-render keep keyboard focus on the same control (matched by data-act/id) when it still exists.
+  if (a11yKeep) {
+    const sel = `[data-act="${CSS.escape(a11yKeep.act)}"]` + ['id', 'g', 'd', 't', 'key'].filter((k) => a11yKeep[k]).map((k) => `[data-${k}="${CSS.escape(a11yKeep[k])}"]`).join('');
+    $(sel, $('#main'))?.focus({ preventScroll: true });
+  }
   $('#demo-banner').hidden = !store.isDemo;
   $('#who').textContent = `${store.user.name} · ${ROLES[store.user.role]}`;
 }
 
-window.addEventListener('hashchange', () => { render(); window.scrollTo(0, 0); });
+window.addEventListener('hashchange', () => { render(); window.scrollTo(0, 0); $('#main').focus({ preventScroll: true }); });
+document.addEventListener('click', (e) => { if (e.target.closest?.('[data-skip]')) { e.preventDefault(); $('#main').focus(); } });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
 
+ui.render = render;
 store.load();
 render();
 

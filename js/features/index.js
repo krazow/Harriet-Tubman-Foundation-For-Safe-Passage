@@ -1,0 +1,20 @@
+// Loads every feature module so it registers itself. Order = order on the More hub.
+import './referrals.js';
+import './intake.js';
+import './board.js';
+import './coi.js';
+import './travel.js';
+import './documents.js';
+import './compliance.js';
+import './reports.js';
+import './quickbooks.js';
+import './donors.js';
+import './field.js';
+import './rides.js';
+import './outreach.js';
+import './volunteers.js';
+import './surveys.js';
+import './announcements.js';
+import './calendar.js';
+import './usage.js';
+import './settings.js';
