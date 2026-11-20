@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Safe Passage Ops</title>
+  <meta name="description" content="Day-to-day operations app for the Harriet Tubman Foundation for Safe Passage.">
+  <meta name="theme-color" content="#3b2a1e">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><img src="icons/icon.svg" alt="" width="28" height="28"><span>Safe Passage Ops</span></div>
+    <a id="who" class="who" href="#/more"></a>
+  </header>
+  <div id="demo-banner" class="demo" hidden>DEMO DATA — fictional people and records</div>
+  <button id="update" class="update" hidden>A new version is ready — tap to reload</button>
+  <main id="main" tabindex="-1"></main>
+  <nav class="nav" aria-label="Main">
+    <a href="#/today" data-tab="today"><span>🏠</span>Today</a>
+    <a href="#/people" data-tab="people"><span>👥</span>People</a>
+    <a href="#/programs" data-tab="programs"><span>🎨</span>Programs</a>
+    <a href="#/money" data-tab="money"><span>💵</span>Money</a>
+    <a href="#/more" data-tab="more"><span>☰</span>More</a>
+  </nav>
+  <div id="sheet" class="sheet" hidden></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <noscript>Safe Passage Ops needs JavaScript turned on.</noscript>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
