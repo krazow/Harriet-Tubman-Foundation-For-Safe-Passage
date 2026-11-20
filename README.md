@@ -34,6 +34,7 @@ npm test      # Node built-in test runner
 
 ## Release
 
-- Every push to `main` runs CI and deploys to GitHub Pages.
-- Bump the version in `package.json`, `js/app.js` (`VERSION`) and `sw.js` (`spo-vX.Y.Z`) together; a test enforces it.
-- Planned: Windows installer (Electron) and signed Android APK (Capacitor). Signing secrets live in GitHub Actions secrets, never in the repo.
+Released with the shared [Krazow release kit](https://github.com/krazow/release-kit): type **`/release now`** in a Claude chat on this repo for a beta at `/beta/`, then **`/release promote`** for production. Pull requests and pushes to `main` run the kit's QA; nothing deploys until a release.
+
+- `VERSION` holds the version; the kit stamps it into `js/app.js`, `package.json` and `sw.js`.
+- Android and Windows builds are switched off in `release.json` for now (PWA first). Turning them on later needs the signing secrets `ANDROID_KEYSTORE_B64`, `ANDROID_KEYSTORE_PASSWORD` and `ANDROID_KEY_ALIAS`.

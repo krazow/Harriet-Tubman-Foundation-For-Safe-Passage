@@ -26,8 +26,15 @@ test('every JavaScript module is cached for offline use', () => {
   for (const f of walk('js')) assert.ok(sw.includes(`'./${f}'`), `${f} missing from sw.js SHELL`);
 });
 
-test('app, service worker and package versions match', () => {
-  const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version;
+test('service worker only deletes its own caches (shared krazow.github.io origin)', () => {
+  const sw = readFileSync(join(root, 'sw.js'), 'utf8');
+  assert.match(sw, /const CACHE_PREFIX = 'safepassage-'/);
+  assert.match(sw, /k\.startsWith\(CACHE_PREFIX\) && k !== VERSION/);
+});
+
+test('VERSION, app, service worker and package versions match', () => {
+  const pkg = readFileSync(join(root, 'VERSION'), 'utf8').trim();
+  assert.equal(JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version, pkg);
   assert.match(readFileSync(join(root, 'js/app.js'), 'utf8'), new RegExp(`VERSION = '${pkg}'`));
-  assert.match(readFileSync(join(root, 'sw.js'), 'utf8'), new RegExp(`spo-v${pkg}`));
+  assert.match(readFileSync(join(root, 'sw.js'), 'utf8'), new RegExp(`CACHE_PREFIX \\+ '${pkg}'`));
 });

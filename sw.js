@@ -1,5 +1,8 @@
 // Service worker: cache-first app shell so the app opens and works offline.
-const VERSION = 'spo-v0.2.0';
+// Cache names must start with CACHE_PREFIX: every krazow app shares krazow.github.io,
+// so this worker only ever deletes its own caches. The release kit stamps VERSION.
+const CACHE_PREFIX = 'safepassage-';
+const VERSION = CACHE_PREFIX + '0.2.0';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/app.css',
   './js/app.js',
@@ -59,7 +62,7 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => (k.startsWith(CACHE_PREFIX) && k !== VERSION) || /^spo-v\d/.test(k)) /* spo-v*: this app's own pre-kit cache names */.map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
