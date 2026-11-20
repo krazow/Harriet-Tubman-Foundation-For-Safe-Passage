@@ -1,0 +1,14 @@
+# Signing keys and secrets — never commit
+*.p12
+*.jks
+*.keystore
+*.pem
+*.key
+.env
+.env.*
+SIGNING-SECRETS*
+
+node_modules/
+_site/
+.DS_Store
+Thumbs.db
