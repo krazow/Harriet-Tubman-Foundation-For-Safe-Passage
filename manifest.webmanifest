@@ -1,0 +1,23 @@
+{
+  "name": "Safe Passage Ops",
+  "short_name": "Safe Passage",
+  "description": "Day-to-day operations for the Harriet Tubman Foundation for Safe Passage.",
+  "id": "./",
+  "start_url": "./#/today",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f3ee",
+  "theme_color": "#3b2a1e",
+  "categories": ["productivity", "business"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ],
+  "shortcuts": [
+    { "name": "Add expense", "url": "./#/money/expenses" },
+    { "name": "People", "url": "./#/people" }
+  ]
+}
