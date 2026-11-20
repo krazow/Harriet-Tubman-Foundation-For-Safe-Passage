@@ -6,6 +6,7 @@
 - Escape all user text with `esc()` before inserting it into HTML.
 - Demo data (`js/demo-data.js`) must be fictional. Never use real people's names or records.
 - Never store Social Security numbers. Never commit signing keys (`*.p12`, `*.jks`); CI blocks them.
-- When versioning, bump `package.json`, `VERSION` in `js/app.js` and the cache name in `sw.js` together.
-- Workflow: feature branch → PR → CI must pass → Claude merges (squash). Pushes to `main` deploy to GitHub Pages.
-- Targets: PWA now; Windows installer (Electron) and Android APK (Capacitor) later. Android signing secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
+- `VERSION` is the version; only `/release now` changes it (it must match `package.json`, `js/app.js` and `sw.js`; a test checks).
+- The service worker may only delete caches starting with `CACHE_PREFIX` ('safepassage-'): all krazow apps share krazow.github.io.
+- Workflow: feature branch → PR → CI must pass → Claude merges (squash). Deploys only happen through `/release now` (beta) and `/release promote` (production) via the krazow release kit.
+- Targets: PWA now; Windows installer (Electron) and Android APK (Capacitor) later. Android/Windows builds come from the release kit (enable in `release.json`); signing secrets: `ANDROID_KEYSTORE_B64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`.

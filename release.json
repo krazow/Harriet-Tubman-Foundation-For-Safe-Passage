@@ -1,0 +1,18 @@
+{
+  "id": "safepassage",
+  "name": "Safe Passage Ops",
+  "description": "Day-to-day operations app for the Harriet Tubman Foundation for Safe Passage.",
+  "site": ".",
+  "app": ".",
+  "exclude": ["ACCESSIBILITY.md", "CLAUDE.md", "CHANGELOG.md", "package.json", "release.json", "VERSION"],
+  "sw": "sw.js",
+  "version": [
+    { "file": "js/app.js", "pattern": "export const VERSION = '([^']*)'" },
+    { "file": "package.json", "pattern": "\"version\": \"([^\"]*)\"" }
+  ],
+  "android": { "enabled": false, "appId": "org.safepassage.ops" },
+  "windows": { "enabled": false, "port": 47310 },
+  "ios": { "enabled": false },
+  "macos": { "enabled": false },
+  "extras": { "enabled": false }
+}
