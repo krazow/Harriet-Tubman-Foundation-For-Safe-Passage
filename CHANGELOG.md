@@ -3,6 +3,7 @@
 ## 0.2.1 (2026-11-22)
 
 ### Added
+- **Work in progress banner:** a striped banner at the top of every screen, kiosk included, until the app is ready for real use.
 - **Watch the walkthrough:** a card at the top of the More page opens the 7-minute YouTube video showing how to use every part of the app.
 
 ## 0.2.0 (2026-11-20)
