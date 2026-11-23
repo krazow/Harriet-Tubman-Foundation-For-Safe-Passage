@@ -38,3 +38,9 @@ test('VERSION, app, service worker and package versions match', () => {
   assert.match(readFileSync(join(root, 'js/app.js'), 'utf8'), new RegExp(`VERSION = '${pkg}'`));
   assert.match(readFileSync(join(root, 'sw.js'), 'utf8'), new RegExp(`CACHE_PREFIX \\+ '${pkg}'`));
 });
+
+test('More page links to the walkthrough video in a new tab', () => {
+  const app = readFileSync(join(root, 'js/app.js'), 'utf8');
+  assert.match(app, /WALKTHROUGH_URL = 'https:\/\/youtu\.be\/SRzzh3QiTi8'/);
+  assert.match(app, /href="\$\{WALKTHROUGH_URL\}" target="_blank" rel="noopener"/);
+});

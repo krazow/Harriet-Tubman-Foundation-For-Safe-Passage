@@ -171,3 +171,9 @@ body.kiosk .check input { width: 32px; height: 32px; }
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
 .qa i { font-style: normal; }
+
+/* Walkthrough video link on More */
+.walkthrough { display: flex; align-items: center; gap: 14px; border-color: var(--accent); }
+.walkthrough b { display: block; font-size: 1.02rem; }
+.walkthrough small { display: block; color: var(--muted); font-size: .85rem; margin-top: 2px; }
+.wt-icon { width: 46px; height: 46px; flex: none; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 1.1rem; padding-left: 3px; }
