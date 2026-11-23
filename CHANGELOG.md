@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1 (2026-11-22)
+
+### Added
+- **Watch the walkthrough:** a card at the top of the More page opens the 7-minute YouTube video showing how to use every part of the app.
+
 ## 0.2.0 (2026-11-20)
 
 ### Added

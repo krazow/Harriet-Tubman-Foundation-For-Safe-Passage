@@ -2,7 +2,7 @@
 // Cache names must start with CACHE_PREFIX: every krazow app shares krazow.github.io,
 // so this worker only ever deletes its own caches. The release kit stamps VERSION.
 const CACHE_PREFIX = 'safepassage-';
-const VERSION = CACHE_PREFIX + '0.2.0';
+const VERSION = CACHE_PREFIX + '0.2.1';
 const SHELL = [
   './', './index.html', './manifest.webmanifest', './css/app.css',
   './js/app.js',

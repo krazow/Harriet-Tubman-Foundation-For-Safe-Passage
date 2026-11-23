@@ -4,7 +4,7 @@ import {
   upcomingDeadlines, canSeeCaseNotes, canSeeMoney, programStats, daysUntil, money,
 } from './rules.js';
 
-export const VERSION = '0.2.0';
+export const VERSION = '0.2.1';
 // Demo video of the app, shown on the More page.
 export const WALKTHROUGH_URL = 'https://youtu.be/SRzzh3QiTi8';
 
