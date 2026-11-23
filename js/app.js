@@ -5,6 +5,8 @@ import {
 } from './rules.js';
 
 export const VERSION = '0.2.0';
+// Demo video of the app, shown on the More page.
+export const WALKTHROUGH_URL = 'https://youtu.be/SRzzh3QiTi8';
 
 const NEEDS = { housing: 'Housing', employment: 'Employment', legal: 'Legal help', financial: 'Financial coaching',
   healing: 'Healing arts', mentorship: 'Mentorship' };
@@ -143,6 +145,10 @@ const views = {
     const visible = features.filter((f) => f.view && (!f.roles || f.roles.includes(u.role)));
     const groups = [...new Set(visible.map((f) => f.group || 'Tools'))];
     return `<h1>More</h1>
+      <a class="card walkthrough" href="${WALKTHROUGH_URL}" target="_blank" rel="noopener">
+        <span class="wt-icon" aria-hidden="true">▶</span>
+        <span class="grow"><b>Watch the walkthrough</b><small>A 7-minute video showing how to use every part of the app (opens YouTube)</small></span>
+      </a>
       ${groups.map((g) => `<h2 class="hub-h">${esc(g)}</h2><div class="hub">${visible.filter((f) => (f.group || 'Tools') === g)
         .map((f) => `<a class="hub-item" href="#/f/${f.id}"><span aria-hidden="true">${f.icon || '•'}</span>${esc(f.title)}</a>`).join('')}</div>`).join('')}
       <section class="card"><h3>Signed in as</h3>
