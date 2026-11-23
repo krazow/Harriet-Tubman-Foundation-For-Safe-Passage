@@ -177,3 +177,8 @@ body.kiosk .check input { width: 32px; height: 32px; }
 .walkthrough b { display: block; font-size: 1.02rem; }
 .walkthrough small { display: block; color: var(--muted); font-size: .85rem; margin-top: 2px; }
 .wt-icon { width: 46px; height: 46px; flex: none; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 1.1rem; padding-left: 3px; }
+
+/* Work-in-progress banner: on every screen (kiosk included) until the owner asks to remove it */
+.wip { display: block; text-align: center; font-weight: 800; font-size: .8rem; letter-spacing: .04em; padding: 5px 8px; color: #fff;
+  background: repeating-linear-gradient(-45deg, #8a2b22 0 14px, #a3372d 14px 28px); }
+body.kiosk .wip { padding-top: calc(env(safe-area-inset-top) + 6px); }

@@ -44,3 +44,12 @@ test('More page links to the walkthrough video in a new tab', () => {
   assert.match(app, /WALKTHROUGH_URL = 'https:\/\/youtu\.be\/SRzzh3QiTi8'/);
   assert.match(app, /href="\$\{WALKTHROUGH_URL\}" target="_blank" rel="noopener"/);
 });
+
+test('Work-in-progress banner is on every screen, including kiosk mode', () => {
+  const html = readFileSync(join(root, 'index.html'), 'utf8');
+  const css = readFileSync(join(root, 'css/app.css'), 'utf8');
+  assert.match(html, /<div id="wip-banner" class="wip"[^>]*>[^<]*WORK IN PROGRESS/);
+  assert.doesNotMatch(html, /id="wip-banner"[^>]*hidden/);
+  const kioskHide = css.match(/body\.kiosk [^{]*\{ display: none/g) || [];
+  assert.ok(!kioskHide.some((r) => r.includes('.wip')), 'kiosk mode must not hide the banner');
+});

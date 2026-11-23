@@ -8,5 +8,6 @@
 - Never store Social Security numbers. Never commit signing keys (`*.p12`, `*.jks`); CI blocks them.
 - `VERSION` is the version; only `/release now` changes it (it must match `package.json`, `js/app.js` and `sw.js`; a test checks).
 - The service worker may only delete caches starting with `CACHE_PREFIX` ('safepassage-'): all krazow apps share krazow.github.io.
+- A "Work in Progress" banner (`#wip-banner` in index.html) shows on every screen, kiosk included. Keep it until the owner explicitly asks to remove it.
 - Workflow: feature branch → PR → CI must pass → Claude merges (squash). Deploys only happen through `/release now` (beta) and `/release promote` (production) via the krazow release kit.
 - Targets: PWA now; Windows installer (Electron) and Android APK (Capacitor) later. Android/Windows builds come from the release kit (enable in `release.json`); signing secrets: `ANDROID_KEYSTORE_B64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`.
